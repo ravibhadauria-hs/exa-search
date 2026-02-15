@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Exa Search Results</title>
+  <style>
+    :root {
+      --bg: #0c0c0f;
+      --surface: #16161a;
+      --surface-elevated: #1c1c22;
+      --border: #2a2a32;
+      --text: #e4e4e7;
+      --text-soft: #a1a1aa;
+      --muted: #71717a;
+      --accent: #a78bfa;
+      --accent-dim: rgba(167, 139, 250, 0.15);
+      --summary-bg: #1a1a20;
+      --summary-border: rgba(167, 139, 250, 0.25);
+      --snippet-bg: #1a1a20;
+      --snippet-border: rgba(167, 139, 250, 0.25);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "DM Sans", "Inter", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container {
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+    h1 span { color: var(--accent); }
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    th, td {
+      padding: 0.875rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    th {
+      font-weight: 600;
+      color: var(--muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    th.summary-cell, th.snippet-cell { color: var(--accent); }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    tr:hover td.summary-cell, tr:hover td.snippet-cell { background: transparent; }
+    tr:hover .summary-inner, tr:hover .snippet-inner { border-color: var(--summary-border); background: var(--surface-elevated); }
+    .summary-cell {
+      background: transparent;
+      min-width: 380px;
+      max-width: 520px;
+      padding: 0.875rem 1rem;
+      vertical-align: top;
+    }
+    .summary-inner {
+      background: var(--summary-bg);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius-sm);
+      padding: 1rem 1.25rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.9375rem;
+      line-height: 1.65;
+      color: var(--text-soft);
+      letter-spacing: 0.01em;
+      max-height: 280px;
+      overflow-y: auto;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+    }
+    .summary-inner::-webkit-scrollbar { width: 6px; }
+    .summary-inner::-webkit-scrollbar-track { background: transparent; }
+    .summary-inner::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .summary-inner:empty::before { content: "—"; color: var(--muted); }
+    .snippet-cell {
+      background: transparent;
+      min-width: 280px;
+      max-width: 380px;
+      padding: 0.875rem 1rem;
+      vertical-align: top;
+    }
+    .snippet-inner {
+      background: var(--snippet-bg);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius-sm);
+      padding: 1rem 1.25rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.9375rem;
+      line-height: 1.65;
+      color: var(--text-soft);
+      letter-spacing: 0.01em;
+      max-height: 280px;
+      overflow-y: auto;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+    }
+    .snippet-inner::-webkit-scrollbar { width: 6px; }
+    .snippet-inner::-webkit-scrollbar-track { background: transparent; }
+    .snippet-inner::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .snippet-inner:empty::before { content: "—"; color: var(--muted); }
+    .col-num { width: 3rem; }
+    .col-name { width: 11rem; }
+    .col-score { width: 4rem; }
+    .col-author { width: 10rem; }
+    .col-url { width: 11rem; }
+    .col-snippet { width: 28rem; }
+    .col-summary { width: 36rem; }
+    .col-text { width: 16rem; max-width: 16rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .empty {
+      padding: 3rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .empty code { background: var(--surface); padding: 0.2em 0.5em; border-radius: 4px; font-size: 0.9em; }
+    .result-count { margin-top: 1rem; color: var(--muted); font-size: 0.875rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1><span>Exa</span> Search Results</h1>
+    {% if headers and rows is not none %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            {% for h in headers %}
+            <th class="{% if h == 'Summary' %}summary-cell{% endif %} {% if h == 'Snippet' %}snippet-cell{% endif %} {% if h == '#' %}col-num{% elif h == 'Name / Title' %}col-name{% elif h == 'Score' %}col-score{% elif h == 'Author' %}col-author{% elif h == 'URL' %}col-url{% elif h == 'Snippet' %}col-snippet{% elif h == 'Summary' %}col-summary{% elif h == 'Text' %}col-text{% endif %}">{{ h }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            {% for i in range(headers|length) %}
+            <td class="{% if headers[i] == 'Summary' %}summary-cell{% endif %} {% if headers[i] == 'Snippet' %}snippet-cell{% endif %} {% if headers[i] == 'URL' and (row[i] if i < row|length else '') %}url-cell{% endif %} {% if headers[i] == '#' %}col-num{% elif headers[i] == 'Name / Title' %}col-name{% elif headers[i] == 'Score' %}col-score{% elif headers[i] == 'Author' %}col-author{% elif headers[i] == 'URL' %}col-url{% elif headers[i] == 'Snippet' %}col-snippet{% elif headers[i] == 'Summary' %}col-summary{% elif headers[i] == 'Text' %}col-text{% endif %}">
+              {% set cell = row[i] if i < row|length else '' %}
+              {% if headers[i] == 'Summary' %}
+              <div class="summary-inner">{{ cell }}</div>
+              {% elif headers[i] == 'Snippet' %}
+              <div class="snippet-inner">{{ cell }}</div>
+              {% elif headers[i] == 'URL' and cell %}
+              <a href="{{ cell }}" target="_blank" rel="noopener">{{ cell | source_name }}</a>
+              {% else %}
+              {{ cell }}
+              {% endif %}
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="result-count">{{ rows|length }} result(s).</p>
+    {% else %}
+    <div class="empty">No results CSV found. Run <code>python test_search.py</code> to generate <code>exa_results.csv</code>, then refresh.</div>
+    {% endif %}
+  </div>
+</body>
+</html>
